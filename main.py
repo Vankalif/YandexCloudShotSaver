@@ -12,7 +12,7 @@ import queue
 from requests.auth import HTTPDigestAuth
 
 # Globals
-SERVER_NAME = "TEST-SERVER"
+SERVER_NAME = "Отрадная"
 APP_TOKEN = "y0_AgAAAABl3sHIAAvpVwAAAAEGxjnpAABpGseraHRK3bgTIqzeVm3n_DDVVg"
 NUMBER_OF_THREADS = 5
 URLS = [
@@ -39,7 +39,7 @@ def init_folders():
 def clear_folder(path: str, offset: int, perm=True):
     dir_struct = CLIENT.listdir(path)
     for file in dir_struct:
-        if (datetime.datetime.now(datetime.timezone.utc) - file.created) > datetime.timedelta(hours=offset):
+        if (datetime.datetime.now(datetime.timezone.utc) - file.created) > datetime.timedelta(days=offset):
             CLIENT.remove(file.path, permanently=perm)
 
 
