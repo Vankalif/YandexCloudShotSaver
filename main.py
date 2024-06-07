@@ -55,7 +55,7 @@ def send_to_cloud(source, destination):
 
 
 def compress_image(input_image_path, output_image_path, quality_scale=2):
-    ffmpeg.input(input_image_path).output(output_image_path, qscale=quality_scale).run()
+    ffmpeg.input(input_image_path).output(output_image_path, qscale=quality_scale).run(quiet=True)
 
 
 def load_shot(source) -> str:
