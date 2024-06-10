@@ -8,10 +8,10 @@ import random
 import ffmpegio
 import yadisk
 import requests
-import ffmpeg
 import queue
 
 from requests.auth import HTTPDigestAuth
+from yadisk.exceptions import ParentNotFoundError, PathNotFoundError
 
 # Globals
 SERVER_NAME = "Отрадная"
@@ -122,7 +122,14 @@ def worker():
         _output = os.path.expandvars("${TEMP}\\" + f"{filename}.jpg")
         compress_image(_input, _output, 20)
         destination = "/" + SERVER_NAME + "/" + channel_folder + "/" + f"{filename}.jpg"
-        send_to_cloud(_output, destination)
+
+        try:
+            send_to_cloud(_output, destination)
+        except (ParentNotFoundError, PathNotFoundError):
+            os.remove(_input)
+            os.remove(_output)
+            continue
+
         os.remove(_input)
         clear_folder("/" + SERVER_NAME + "/" + channel_folder, CLEAR_OFFSET)
         Q.task_done()
