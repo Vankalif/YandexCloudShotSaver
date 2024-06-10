@@ -88,7 +88,8 @@ def load_shot(source) -> str:
     response = requests.get(source,
                             auth=HTTPDigestAuth('admin', '123456zxC'),
                             verify=False,
-                            stream=True)
+                            stream=True,
+                            timeout=5)
 
     if response.status_code != 200:
         raise requests.HTTPError
@@ -114,7 +115,8 @@ def worker():
 
         try:
             _input = load_shot(url)
-        except requests.HTTPError:
+        except (requests.HTTPError, requests.ConnectTimeout):
+            Q.task_done()
             continue
 
         datetime_now = datetime.datetime.now()
@@ -128,6 +130,7 @@ def worker():
         except (ParentNotFoundError, PathNotFoundError):
             os.remove(_input)
             os.remove(_output)
+            Q.task_done()
             continue
 
         os.remove(_input)
