@@ -9,6 +9,7 @@ import ffmpegio
 import yadisk
 import requests
 import queue
+import logging
 
 from requests.auth import HTTPDigestAuth
 from yadisk.exceptions import ParentNotFoundError, PathNotFoundError
@@ -16,24 +17,31 @@ from yadisk.exceptions import ParentNotFoundError, PathNotFoundError
 # Globals
 with open("glob.toml", "rb") as f:
     GLOBALS = tomllib.load(f)
+
 Q = queue.Queue()
 CLIENT = yadisk.Client(token=GLOBALS['APP_TOKEN'])
+logging.basicConfig(level=logging.DEBUG, filename="log.txt")
 
 
 def init_folders(config):
+    logging.debug(f"{datetime.datetime.now()} Начало проверки папок")
     if not CLIENT.exists(f"/{GLOBALS['SERVER_NAME']}"):
+        logging.debug(f"{datetime.datetime.now()} Корневой каталог не обнаружен - создание")
         CLIENT.mkdir(f"/{GLOBALS['SERVER_NAME']}")
     else:
+        logging.debug(f"{datetime.datetime.now()} Корневой каталог найден - возврат")
         return
 
     for resource in config["URLS"]:
         if not CLIENT.exists(f"/{GLOBALS['SERVER_NAME']}/{resource["name"]}"):
+            logging.debug(f"{datetime.datetime.now()} Каталог камеры не найден - создание")
             CLIENT.mkdir(f"/{GLOBALS['SERVER_NAME']}/{resource["name"]}")
 
 
 def load_config(path):
     with open(path, "rb") as f:
         config = tomllib.load(f)
+        logging.debug(f"{datetime.datetime.now()} Конфигурационный файл прочитан - возврат")
         return config
 
 
@@ -116,19 +124,29 @@ def worker():
 
 
 if __name__ == '__main__':
+    logging.debug(f"{datetime.datetime.now()} Запуск программы")
+    logging.debug(f"{datetime.datetime.now()} Файл глобальных переменных загружен")
+
     config = load_config("conf.toml")
     init_folders(config)
 
+    logging.debug(f"{datetime.datetime.now()} Инициализация папок завершена")
+    logging.debug(f"{datetime.datetime.now()} Подготовка очереди задач")
+
     for resource in config["URLS"]:
         Q.put(resource)
+        logging.debug(f"{datetime.datetime.now()} Задание {resource["name"]} поставлено в очередь задач")
 
     threads = []
     for _ in range(GLOBALS['NUMBER_OF_THREADS']):
         thread = threading.Thread(target=worker)
         thread.start()
+        logging.debug(f"{datetime.datetime.now()} Запущен поток {thread.name}")
         threads.append(thread)
 
+    logging.debug(f"{datetime.datetime.now()} Ожидание завершения очереди")
     Q.join()
 
     for thread in threads:
+        logging.debug(f"{datetime.datetime.now()} Ожидание завершения потока {thread.name}")
         thread.join()
