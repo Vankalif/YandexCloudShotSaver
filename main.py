@@ -116,7 +116,7 @@ def worker():
 
 
 if __name__ == '__main__':
-    config = load_config("C:\\Scripts\\conf.toml")
+    config = load_config("conf.toml")
     init_folders(config)
 
     for resource in config["URLS"]:
