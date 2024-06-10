@@ -99,7 +99,7 @@ def worker():
         datetime_now = datetime.datetime.now()
         filename = datetime_now.strftime("%d%m%y-%H-%M-%S-") + salt()
         _output = os.path.expandvars("${TEMP}\\" + f"{filename}.jpg")
-        compress_image(_input, _output, 20)
+        compress_image(_input, _output, GLOBALS['QUALITY_SCALE'])
         destination = "/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder + "/" + f"{filename}.jpg"
 
         try:
