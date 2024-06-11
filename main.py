@@ -51,6 +51,7 @@ def clear_folder(path: str, offset: int, perm=True):
     for file in dir_struct:
         if (datetime.datetime.now(datetime.timezone.utc) - file.created) > datetime.timedelta(days=offset):
             CLIENT.remove(file.path, permanently=perm)
+            logging.debug(f"{datetime.datetime.now()} Устаревший файл {file.path} удален")
 
 
 def salt(size=6, chars=string.ascii_uppercase + string.digits):
@@ -58,8 +59,8 @@ def salt(size=6, chars=string.ascii_uppercase + string.digits):
 
 
 def send_to_cloud(source, destination):
-    with CLIENT:
-        CLIENT.upload(source, destination, timeout=10, n_retries=2, retry_interval=4)
+    CLIENT.upload(source, destination, timeout=10, n_retries=2, retry_interval=4)
+    logging.debug(f"{datetime.datetime.now()} Скриншот {source} отправлен в {destination}")
 
 
 def compress_image(input_image_path, output_image_path, quality_scale=2):
@@ -113,7 +114,6 @@ def worker():
 
         try:
             send_to_cloud(_output, destination)
-            logging.debug(f"{datetime.datetime.now()} Скриншот {_output} отправлен в {destination}")
         except (ParentNotFoundError, PathNotFoundError):
             Q.task_done()
             continue
@@ -148,6 +148,8 @@ if __name__ == '__main__':
     for thread in threads:
         logging.debug(f"{datetime.datetime.now()} Ожидание завершения потока {thread.name}")
         thread.join()
+
+    CLIENT.close()
 
     for item in TRASH:
         os.remove(item)
