@@ -117,6 +117,7 @@ def worker():
         try:
             send_to_cloud(_output, destination)
         except (ParentNotFoundError, PathNotFoundError):
+            logging.debug(f"{datetime.datetime.now()} Сбой при загрузке скриншота {_output}")
             Q.task_done()
             continue
 
