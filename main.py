@@ -100,6 +100,7 @@ def worker():
 
         try:
             _input = load_shot(url, login, pwd)
+            logging.debug(f"{datetime.datetime.now()} Получен скриншот {_input}")
         except (requests.HTTPError, requests.ConnectTimeout):
             Q.task_done()
             continue
@@ -108,17 +109,21 @@ def worker():
         filename = datetime_now.strftime("%d%m%y-%H-%M-%S-") + salt()
         _output = os.path.expandvars("${TEMP}\\" + f"{filename}.jpg")
         compress_image(_input, _output, GLOBALS['QUALITY_SCALE'])
+        logging.debug(f"{datetime.datetime.now()} Выполнено сжатие скриншота {_output}")
         destination = "/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder + "/" + f"{filename}.jpg"
 
         try:
             send_to_cloud(_output, destination)
+            logging.debug(f"{datetime.datetime.now()} Скриншот {_output} отправлен в {destination}")
         except (ParentNotFoundError, PathNotFoundError):
             Q.task_done()
             continue
 
         clear_folder("/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder, GLOBALS['CLEAR_OFFSET'])
         TRASH.append(_input)
+        logging.debug(f"{datetime.datetime.now()} Скриншот {_input} помещен в корзину")
         TRASH.append(_output)
+        logging.debug(f"{datetime.datetime.now()} Скриншот {_output} помещен в корзину")
         Q.task_done()
 
 
@@ -147,4 +152,4 @@ if __name__ == '__main__':
 
     for item in TRASH:
         os.remove(item)
-    logging.debug(f"{datetime.datetime.now()} Очистка выполнена.")
+        logging.debug(f"{datetime.datetime.now()} Файл {item} удален.")
