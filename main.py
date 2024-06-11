@@ -21,6 +21,7 @@ with open("glob.toml", "rb") as f:
 Q = queue.Queue()
 CLIENT = yadisk.Client(token=GLOBALS['APP_TOKEN'])
 logging.basicConfig(level=logging.DEBUG, filename="log.txt")
+TRASH = []
 
 
 def init_folders(config):
@@ -60,7 +61,6 @@ def send_to_cloud(source, destination):
     with CLIENT:
         if CLIENT.check_token():
             CLIENT.upload(source, destination)
-            os.remove(source)
 
 
 def compress_image(input_image_path, output_image_path, quality_scale=2):
@@ -113,25 +113,20 @@ def worker():
         try:
             send_to_cloud(_output, destination)
         except (ParentNotFoundError, PathNotFoundError):
-            os.remove(_input)
-            os.remove(_output)
             Q.task_done()
             continue
 
-        os.remove(_input)
         clear_folder("/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder, GLOBALS['CLEAR_OFFSET'])
+        TRASH.append(_input)
+        TRASH.append(_output)
         Q.task_done()
 
 
 if __name__ == '__main__':
     logging.debug(f"{datetime.datetime.now()} Запуск программы")
-    logging.debug(f"{datetime.datetime.now()} Файл глобальных переменных загружен")
 
     config = load_config("conf.toml")
     init_folders(config)
-
-    logging.debug(f"{datetime.datetime.now()} Инициализация папок завершена")
-    logging.debug(f"{datetime.datetime.now()} Подготовка очереди задач")
 
     for resource in config["URLS"]:
         Q.put(resource)
@@ -144,9 +139,12 @@ if __name__ == '__main__':
         logging.debug(f"{datetime.datetime.now()} Запущен поток {thread.name}")
         threads.append(thread)
 
-    logging.debug(f"{datetime.datetime.now()} Ожидание завершения очереди")
     Q.join()
 
     for thread in threads:
         logging.debug(f"{datetime.datetime.now()} Ожидание завершения потока {thread.name}")
         thread.join()
+
+    for item in TRASH:
+        os.remove(item)
+    logging.debug(f"{datetime.datetime.now()} Очистка выполнена.")
