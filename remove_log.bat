@@ -1,1 +1,1 @@
-del ./log.txt
+del log.txt
