@@ -157,3 +157,5 @@ if __name__ == '__main__':
     for item in TRASH:
         os.remove(item)
         logging.debug(f"{datetime.datetime.now()} Файл {item} удален.")
+
+    logging.debug(f"{datetime.datetime.now()} Размер очереди при завершении {Q.qsize()}.")
