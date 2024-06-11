@@ -61,7 +61,7 @@ def salt(size=6, chars=string.ascii_uppercase + string.digits):
 
 def send_to_cloud(source, destination):
     logging.debug(f"{datetime.datetime.now()} Начало отправки из {source} в {destination}")
-    CLIENT.upload(source, destination, timeout=10, n_retries=2, retry_interval=4)
+    CLIENT.upload(source, destination)
     logging.debug(f"{datetime.datetime.now()} Скриншот {source} отправлен в {destination}")
 
 
