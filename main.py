@@ -1,6 +1,5 @@
 import datetime
 import string
-import threading
 import uuid
 import os
 import random
@@ -10,6 +9,7 @@ import yadisk
 import requests
 import queue
 import logging
+import concurrent.futures
 
 from requests.auth import HTTPDigestAuth
 from yadisk.exceptions import ParentNotFoundError, PathNotFoundError
@@ -89,44 +89,37 @@ def load_shot(source, login, pwd) -> str:
     return path
 
 
-def worker():
-    while True:
-        if Q.empty():
-            break
+def worker(cam_info):
+    resource = cam_info["resource"]
+    channel_folder = cam_info["name"]
+    login = cam_info["login"]
+    pwd = cam_info["pwd"]
 
-        cam_info = Q.get(block=False)
-        url = cam_info["resource"]
-        channel_folder = cam_info["name"]
-        login = cam_info["login"]
-        pwd = cam_info["pwd"]
+    try:
+        _input = load_shot(resource, login, pwd)
+        logging.debug(f"{datetime.datetime.now()} Получен скриншот {_input}")
+    except (requests.HTTPError, requests.ConnectTimeout):
+        logging.debug(f"{datetime.datetime.now()} При получении скриншота {_input} произошел сбой.")
+        return
 
-        try:
-            _input = load_shot(url, login, pwd)
-            logging.debug(f"{datetime.datetime.now()} Получен скриншот {_input}")
-        except (requests.HTTPError, requests.ConnectTimeout):
-            Q.task_done()
-            continue
+    datetime_now = datetime.datetime.now()
+    filename = datetime_now.strftime("%d%m%y-%H-%M-%S-") + salt()
+    _output = os.path.expandvars("${TEMP}\\" + f"{filename}.jpg")
+    compress_image(_input, _output, GLOBALS['QUALITY_SCALE'])
+    logging.debug(f"{datetime.datetime.now()} Выполнено сжатие скриншота {_output}")
+    destination = "/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder + "/" + f"{filename}.jpg"
 
-        datetime_now = datetime.datetime.now()
-        filename = datetime_now.strftime("%d%m%y-%H-%M-%S-") + salt()
-        _output = os.path.expandvars("${TEMP}\\" + f"{filename}.jpg")
-        compress_image(_input, _output, GLOBALS['QUALITY_SCALE'])
-        logging.debug(f"{datetime.datetime.now()} Выполнено сжатие скриншота {_output}")
-        destination = "/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder + "/" + f"{filename}.jpg"
+    try:
+        send_to_cloud(_output, destination)
+    except (ParentNotFoundError, PathNotFoundError):
+        logging.debug(f"{datetime.datetime.now()} Сбой при загрузке скриншота {_output}")
+        return
 
-        try:
-            send_to_cloud(_output, destination)
-        except (ParentNotFoundError, PathNotFoundError):
-            logging.debug(f"{datetime.datetime.now()} Сбой при загрузке скриншота {_output}")
-            Q.task_done()
-            continue
-
-        clear_folder("/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder, GLOBALS['CLEAR_OFFSET'])
-        TRASH.append(_input)
-        logging.debug(f"{datetime.datetime.now()} Скриншот {_input} помещен в корзину")
-        TRASH.append(_output)
-        logging.debug(f"{datetime.datetime.now()} Скриншот {_output} помещен в корзину")
-        Q.task_done()
+    clear_folder("/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder, GLOBALS['CLEAR_OFFSET'])
+    TRASH.append(_input)
+    logging.debug(f"{datetime.datetime.now()} Скриншот {_input} помещен в корзину")
+    TRASH.append(_output)
+    logging.debug(f"{datetime.datetime.now()} Скриншот {_output} помещен в корзину")
 
 
 if __name__ == '__main__':
@@ -135,27 +128,11 @@ if __name__ == '__main__':
     config = load_config("conf.toml")
     init_folders(config)
 
-    for resource in config["URLS"]:
-        Q.put(resource)
-        logging.debug(f"{datetime.datetime.now()} Задание {resource["name"]} поставлено в очередь задач")
-
-    threads = []
-    for _ in range(GLOBALS['NUMBER_OF_THREADS']):
-        thread = threading.Thread(target=worker)
-        thread.start()
-        logging.debug(f"{datetime.datetime.now()} Запущен поток {thread.name}")
-        threads.append(thread)
-
-    Q.join()
-
-    for thread in threads:
-        logging.debug(f"{datetime.datetime.now()} Ожидание завершения потока {thread.name}")
-        thread.join()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=GLOBALS['NUMBER_OF_THREADS']) as executor:
+        executor.map(worker, config["URLS"])
 
     CLIENT.close()
 
     for item in TRASH:
         os.remove(item)
         logging.debug(f"{datetime.datetime.now()} Файл {item} удален.")
-
-    logging.debug(f"{datetime.datetime.now()} Размер очереди при завершении {Q.qsize()}.")
