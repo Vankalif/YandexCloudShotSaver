@@ -59,8 +59,7 @@ def salt(size=6, chars=string.ascii_uppercase + string.digits):
 
 def send_to_cloud(source, destination):
     with CLIENT:
-        if CLIENT.check_token():
-            CLIENT.upload(source, destination, timeout=10, n_retries=2, retry_interval=4)
+        CLIENT.upload(source, destination, timeout=10, n_retries=2, retry_interval=4)
 
 
 def compress_image(input_image_path, output_image_path, quality_scale=2):
