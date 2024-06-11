@@ -47,6 +47,7 @@ def load_config(path):
 
 
 def clear_folder(path: str, offset: int, perm=True):
+    logging.debug(f"{datetime.datetime.now()} Поиск в {path} файлов для удаления")
     dir_struct = CLIENT.listdir(path)
     for file in dir_struct:
         if (datetime.datetime.now(datetime.timezone.utc) - file.created) > datetime.timedelta(days=offset):
@@ -59,6 +60,7 @@ def salt(size=6, chars=string.ascii_uppercase + string.digits):
 
 
 def send_to_cloud(source, destination):
+    logging.debug(f"{datetime.datetime.now()} Начало отправки из {source} в {destination}")
     CLIENT.upload(source, destination, timeout=10, n_retries=2, retry_interval=4)
     logging.debug(f"{datetime.datetime.now()} Скриншот {source} отправлен в {destination}")
 
