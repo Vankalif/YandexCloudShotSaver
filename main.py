@@ -42,17 +42,13 @@ def init_folders(config):
 def load_config(path):
     with open(path, "rb") as f:
         config = tomllib.load(f)
-        logging.debug(f"{datetime.datetime.now()} Конфигурационный файл прочитан - возврат")
         return config
 
 
-def clear_folder(path: str, offset: int, perm=True):
-    logging.debug(f"{datetime.datetime.now()} Поиск в {path} файлов для удаления")
-    dir_struct = CLIENT.listdir(path)
-    for file in dir_struct:
-        if (datetime.datetime.now(datetime.timezone.utc) - file.created) > datetime.timedelta(days=offset):
-            CLIENT.remove(file.path, permanently=perm)
-            logging.debug(f"{datetime.datetime.now()} Устаревший файл {file.path} удален")
+def get_offset_shot_name(ch_id, offset) -> str:
+    name = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=offset)).strftime("%d%m%y-%H-%M-%S-")
+    name = name + ch_id
+    return name
 
 
 def salt(size=6, chars=string.ascii_uppercase + string.digits):
@@ -60,7 +56,6 @@ def salt(size=6, chars=string.ascii_uppercase + string.digits):
 
 
 def send_to_cloud(source, destination):
-    logging.debug(f"{datetime.datetime.now()} Начало отправки из {source} в {destination}")
     CLIENT.upload(source, destination)
     logging.debug(f"{datetime.datetime.now()} Скриншот {source} отправлен в {destination}")
 
@@ -103,7 +98,7 @@ def worker(cam_info):
         return
 
     datetime_now = datetime.datetime.now()
-    filename = datetime_now.strftime("%d%m%y-%H-%M-%S-") + salt()
+    filename = datetime_now.strftime("%d%m%y-%H-%M-%S-") + cam_info["ch_id"]
     _output = os.path.expandvars("${TEMP}\\" + f"{filename}.jpg")
     compress_image(_input, _output, GLOBALS['QUALITY_SCALE'])
     logging.debug(f"{datetime.datetime.now()} Выполнено сжатие скриншота {_output}")
@@ -115,11 +110,15 @@ def worker(cam_info):
         logging.debug(f"{datetime.datetime.now()} Сбой при загрузке скриншота {_output}")
         return
 
-    clear_folder("/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder, GLOBALS['CLEAR_OFFSET'])
+    try:
+        offset_shot = get_offset_shot_name(cam_info["ch_id"], 3)
+        path_to_clean = "/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder + "/" + offset_shot
+        CLIENT.remove(path_to_clean)
+    except PathNotFoundError:
+        pass
+
     TRASH.append(_input)
-    logging.debug(f"{datetime.datetime.now()} Скриншот {_input} помещен в корзину")
     TRASH.append(_output)
-    logging.debug(f"{datetime.datetime.now()} Скриншот {_output} помещен в корзину")
 
 
 if __name__ == '__main__':
