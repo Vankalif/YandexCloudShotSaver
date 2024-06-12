@@ -27,7 +27,7 @@ TRASH = []
 def init_folders(config):
     logging.debug(f"{datetime.datetime.now()} Начало проверки папок")
     if not CLIENT.exists(f"/{GLOBALS['SERVER_NAME']}"):
-        logging.debug(f"{datetime.datetime.now()} Корневой каталог не обнаружен - создание")
+        logging.debug(f"{datetime.datetime.now()} Создан корневой каталог /{GLOBALS['SERVER_NAME']}")
         CLIENT.mkdir(f"/{GLOBALS['SERVER_NAME']}")
     else:
         logging.debug(f"{datetime.datetime.now()} Корневой каталог найден - возврат")
@@ -35,8 +35,8 @@ def init_folders(config):
 
     for resource in config["URLS"]:
         if not CLIENT.exists(f"/{GLOBALS['SERVER_NAME']}/{resource["name"]}"):
-            logging.debug(f"{datetime.datetime.now()} Каталог камеры не найден - создание")
             CLIENT.mkdir(f"/{GLOBALS['SERVER_NAME']}/{resource["name"]}")
+            logging.debug(f"{datetime.datetime.now()} Создан облачный каталог /{GLOBALS['SERVER_NAME']}/{resource["name"]}")
 
 
 def load_config(path):
@@ -114,7 +114,9 @@ def worker(cam_info):
         offset_shot = get_offset_shot_name(cam_info["ch_id"], 3)
         path_to_clean = "/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder + "/" + offset_shot
         CLIENT.remove(path_to_clean)
+        logging.debug(f"{datetime.datetime.now()} Устаревший скриншот {path_to_clean} удален.")
     except PathNotFoundError:
+        logging.debug(f"{datetime.datetime.now()} Скриншот {path_to_clean} не найден.")
         pass
 
     TRASH.append(_input)
