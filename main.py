@@ -19,7 +19,7 @@ with open("glob.toml", "rb") as f:
     GLOBALS = tomllib.load(f)
 
 Q = queue.Queue()
-CLIENT = yadisk.Client(token=GLOBALS['APP_TOKEN'])
+CLIENT = yadisk.Client(token=GLOBALS['APP_TOKEN'], session="httpx")
 logging.basicConfig(level=logging.DEBUG, filename="log.txt")
 TRASH = []
 
