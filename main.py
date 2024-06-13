@@ -118,9 +118,6 @@ def worker(cam_info):
         logging.debug(f"{datetime.datetime.now()} Скриншот {path_to_clean} не найден.")
         pass
 
-    TRASH.append(_input)
-    TRASH.append(_output)
-
 
 if __name__ == '__main__':
     logging.debug(f"{datetime.datetime.now()} Запуск программы")
@@ -138,5 +135,8 @@ if __name__ == '__main__':
     finally:
         for item in os.listdir(os.path.expandvars("${TEMP}\\")):
             if item.endswith(".jpg"):
-                os.remove(item)
-                logging.debug(f"{datetime.datetime.now()} Файл {item} удален.")
+                TRASH.append(item)
+
+        for item in TRASH:
+            os.remove(item)
+
