@@ -72,11 +72,8 @@ def load_shot(source, login, pwd) -> str:
                             stream=True,
                             timeout=5)
 
-    if response.status_code != 200:
-        raise response.raise_for_status()
-
+    response.raise_for_status()
     bdata = response.content
-
     path = os.path.expandvars("${TEMP}\\" + f"{str(uuid.uuid4())}.jpg")
 
     with open(path, 'wb') as file:
@@ -129,10 +126,14 @@ if __name__ == '__main__':
 
     config = load_config("conf.toml")
     init_folders(config)
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=GLOBALS['NUMBER_OF_THREADS']) as executor:
+            executor.map(worker, config["URLS"])
+            CLIENT.close()
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=GLOBALS['NUMBER_OF_THREADS']) as executor:
-        executor.map(worker, config["URLS"])
-        CLIENT.close()
-        for item in TRASH:
+    except Exception as e:
+        logging.debug(f"{datetime.datetime.now()} Общий сбой {e}")
+    finally:
+        for item in os.listdir(os.path.expandvars("${TEMP}\\")):
             os.remove(item)
             logging.debug(f"{datetime.datetime.now()} Файл {item} удален.")
