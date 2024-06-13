@@ -10,6 +10,7 @@ import requests
 import queue
 import logging
 import concurrent.futures
+import shutil
 
 from requests.auth import HTTPDigestAuth
 from yadisk.exceptions import ParentNotFoundError, PathNotFoundError
@@ -133,10 +134,5 @@ if __name__ == '__main__':
     except Exception as e:
         logging.debug(f"{datetime.datetime.now()} Общий сбой {e}")
     finally:
-        for item in os.listdir(os.path.expandvars("${TEMP}\\")):
-            if item.endswith(".jpg"):
-                TRASH.append(item)
-
-        for item in TRASH:
-            os.remove(item)
+        shutil.rmtree(os.path.expandvars("${TEMP}\\"))
 
