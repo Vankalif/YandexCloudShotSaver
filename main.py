@@ -135,5 +135,6 @@ if __name__ == '__main__':
         logging.debug(f"{datetime.datetime.now()} Общий сбой {e}")
     finally:
         for item in os.listdir(os.path.expandvars("${TEMP}\\")):
-            os.remove(item)
-            logging.debug(f"{datetime.datetime.now()} Файл {item} удален.")
+            if item.endswith(".jpg"):
+                os.remove(item)
+                logging.debug(f"{datetime.datetime.now()} Файл {item} удален.")
