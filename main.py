@@ -46,6 +46,7 @@ def delete_files_in_directory(directory_path):
         file_path = os.path.join(directory_path, file)
         if os.path.isfile(file_path):
             os.remove(file_path)
+            logging.debug(f"{datetime.datetime.now()} Файл удален {file_path}")
 
 
 def load_config(path):
