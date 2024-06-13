@@ -129,6 +129,7 @@ if __name__ == '__main__':
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=GLOBALS['NUMBER_OF_THREADS']) as executor:
             executor.map(worker, config["URLS"])
+            executor.shutdown()
             CLIENT.close()
 
     except Exception as e:
