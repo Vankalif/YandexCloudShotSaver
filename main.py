@@ -65,6 +65,7 @@ def compress_image(input_image_path, output_image_path, quality_scale=2):
 
 
 def load_shot(source, login, pwd) -> str:
+    logging.debug(f"{datetime.datetime.now()} Выполняется запрос к {source} с параметрами {login}/{pwd}")
     response = requests.get(source,
                             auth=HTTPDigestAuth(login, pwd),
                             verify=False,
@@ -72,7 +73,7 @@ def load_shot(source, login, pwd) -> str:
                             timeout=5)
 
     if response.status_code != 200:
-        raise requests.HTTPError
+        raise response.raise_for_status()
 
     bdata = response.content
 
