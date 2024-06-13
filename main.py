@@ -10,7 +10,6 @@ import requests
 import queue
 import logging
 import concurrent.futures
-import shutil
 
 from requests.auth import HTTPDigestAuth
 from yadisk.exceptions import ParentNotFoundError, PathNotFoundError
@@ -37,7 +36,16 @@ def init_folders(config):
     for resource in config["URLS"]:
         if not CLIENT.exists(f"/{GLOBALS['SERVER_NAME']}/{resource["name"]}"):
             CLIENT.mkdir(f"/{GLOBALS['SERVER_NAME']}/{resource["name"]}")
-            logging.debug(f"{datetime.datetime.now()} Создан облачный каталог /{GLOBALS['SERVER_NAME']}/{resource["name"]}")
+            logging.debug(
+                f"{datetime.datetime.now()} Создан облачный каталог /{GLOBALS['SERVER_NAME']}/{resource["name"]}")
+
+
+def delete_files_in_directory(directory_path):
+    files = os.listdir(directory_path)
+    for file in files:
+        file_path = os.path.join(directory_path, file)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
 
 def load_config(path):
@@ -134,5 +142,4 @@ if __name__ == '__main__':
     except Exception as e:
         logging.debug(f"{datetime.datetime.now()} Общий сбой {e}")
     finally:
-        shutil.rmtree(os.path.expandvars("${TEMP}\\"))
-
+        delete_files_in_directory(os.path.expandvars("${TEMP}\\"))
