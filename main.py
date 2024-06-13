@@ -132,7 +132,6 @@ if __name__ == '__main__':
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=GLOBALS['NUMBER_OF_THREADS']) as executor:
         executor.map(worker, config["URLS"])
-        executor.shutdown()
         CLIENT.close()
         for item in TRASH:
             os.remove(item)
