@@ -1,8 +1,6 @@
 import datetime
-import string
 import uuid
 import os
-import random
 import tomllib
 import ffmpegio
 import yadisk
@@ -56,13 +54,9 @@ def load_config(path):
 
 
 def get_offset_shot_name(ch_id, offset) -> str:
-    name = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=offset)).strftime("%d%m%y-%H-%M-%S-")
+    name = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=offset)).strftime("%d%m%y-%H-%M-")
     name = name + ch_id
     return name
-
-
-def salt(size=6, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
 
 
 def send_to_cloud(source, destination):
@@ -107,7 +101,7 @@ def worker(cam_info):
         return
 
     datetime_now = datetime.datetime.now()
-    filename = datetime_now.strftime("%d%m%y-%H-%M-%S-") + cam_info["ch_id"]
+    filename = datetime_now.strftime("%d%m%y-%H-%M-") + cam_info["ch_id"]
     _output = os.path.expandvars("${TEMP}\\" + f"{filename}.jpg")
     compress_image(_input, _output, GLOBALS['QUALITY_SCALE'])
     logging.debug(f"{datetime.datetime.now()} Выполнено сжатие скриншота {_output}")
