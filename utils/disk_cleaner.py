@@ -29,7 +29,7 @@ def finder(path: str) -> list:
     fields = ["name", "type", "path", "created"]
 
     try:
-        dir_generator = client.listdir(path, timeout=45, fields=fields)
+        dir_generator = client.listdir(path, timeout=600, fields=fields)
         print(f"checking {path}")
         for i in dir_generator:
             files.append(i)
@@ -42,16 +42,13 @@ def finder(path: str) -> list:
 
 
 if __name__ == '__main__':
-    files = []
     start_time = time.time()
     for item in CONFIG["URLS"]:
         path = "/" + GLOBALS["SERVER_NAME"] + "/" + item["name"]
         res = finder(path)
-        for i in res:
-            files.append(i)
 
-    with ThreadPoolExecutor(max_workers=None) as executor:
-        results = list(executor.map(cleaner, files))
+        with ThreadPoolExecutor(max_workers=None) as executor:
+            executor.map(cleaner, res)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
