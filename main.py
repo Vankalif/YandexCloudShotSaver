@@ -113,15 +113,6 @@ def worker(cam_info):
         logging.debug(f"{datetime.datetime.now()} Сбой при загрузке скриншота {_output}")
         return
 
-    try:
-        offset_shot = get_offset_shot_name(cam_info["ch_id"], 3)
-        path_to_clean = "/" + GLOBALS['SERVER_NAME'] + "/" + channel_folder + "/" + offset_shot
-        CLIENT.remove(path_to_clean)
-        logging.debug(f"{datetime.datetime.now()} Устаревший скриншот {path_to_clean} удален.")
-    except PathNotFoundError:
-        logging.debug(f"{datetime.datetime.now()} Скриншот {path_to_clean} не найден.")
-        pass
-
 
 if __name__ == '__main__':
     logging.debug(f"{datetime.datetime.now()} Запуск программы")
