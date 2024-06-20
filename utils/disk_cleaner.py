@@ -19,7 +19,7 @@ client = yadisk.Client(token=GLOBALS['APP_TOKEN'])
 def cleaner(item):
     if (datetime.datetime.now(datetime.timezone.utc) - item.created) > datetime.timedelta(days=GLOBALS['CLEAR_OFFSET']):
         try:
-            client.remove(item.path)
+            client.remove(item.path, permanently=True)
         except yadisk.exceptions.PathNotFoundError:
             print(f"path - {path} not found. Aborting.")
 
