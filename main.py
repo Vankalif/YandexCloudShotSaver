@@ -5,7 +5,6 @@ import tomllib
 import ffmpegio
 import yadisk
 import requests
-import queue
 import logging
 import concurrent.futures
 
@@ -16,7 +15,6 @@ from yadisk.exceptions import ParentNotFoundError, PathNotFoundError
 with open("glob.toml", "rb") as f:
     GLOBALS = tomllib.load(f)
 
-Q = queue.Queue()
 CLIENT = yadisk.Client(token=GLOBALS['APP_TOKEN'], session="httpx")
 logging.basicConfig(level=logging.DEBUG, filename="log.txt")
 TRASH = []
@@ -116,6 +114,7 @@ def worker(cam_info):
 
 if __name__ == '__main__':
     logging.debug(f"{datetime.datetime.now()} Запуск программы")
+    exit(0)
 
     config = load_config("conf.toml")
     init_folders(config)
